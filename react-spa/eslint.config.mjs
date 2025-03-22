@@ -19,6 +19,9 @@ export default defineConfig([
           version: "19.0.0"
         }
       },
-      extends: [pluginReact.configs.flat.recommended]
+      extends: [pluginReact.configs.flat.recommended],
+      rules: {
+        "react/react-in-jsx-scope": "off" // Add to prevent tests causing errors with the statement: render(<App />);
+      }
     },
 ]);

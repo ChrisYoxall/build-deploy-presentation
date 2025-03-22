@@ -1,9 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeAll, afterEach, afterAll } from 'vitest';
+import userEvent from '@testing-library/user-event';
 import App from './App';
 
 describe('App Component', () => {
-
     // Setup mock before all tests
     beforeAll(() => {
         // Mock fetch globally
@@ -20,34 +20,54 @@ describe('App Component', () => {
         vi.restoreAllMocks();
     });
 
-
-    it('Shows loading state initially', () => {
+    it('Shows loading state initially', async () => {
         // Mock fetch to return a promise that never resolves for this test
         vi.mocked(global.fetch).mockImplementation(() => new Promise(() => {}));
 
         render(<App />);
-        // Use correct type for getByText
+
+        // Simulate user entering a username and clicking search
+        const input = screen.getByPlaceholderText('Enter GitHub username');
+        const button = screen.getByRole('button', { name: /submit/i });
+
+        await userEvent.type(input, 'tester');
+        await userEvent.click(button);
+
+        // Check that loading state is displayed
         expect(screen.getByText('Loading...')).toBeInTheDocument();
     });
 
-    it('Renders posts when API call succeeds', async () => {
+    it('Renders user data when API call succeeds', async () => {
         // Mock successful API response
-        const mockPosts = [
-            { id: 1, title: 'Test Title 1', body: 'Test Body 1' },
-            { id: 2, title: 'Test Title 2', body: 'Test Body 2' }
-        ];
+        const mockResponse = {
+            isValid: true,
+            user: {
+                login: 'login_123',
+                id: 123,
+                name: 'name',
+                company: 'company_ABC',
+                public_repos: 3
+            }
+        };
 
         vi.mocked(global.fetch).mockResolvedValueOnce({
             ok: true,
-            json: async () => mockPosts
+            json: async () => mockResponse
         } as unknown as Response);
 
         render(<App />);
 
-        // Wait for posts to be displayed
+        // Simulate user entering a username and clicking submit
+        const input = screen.getByPlaceholderText('Enter GitHub username');
+        const button = screen.getByRole('button', { name: /submit/i });
+
+        await userEvent.type(input, 'tester');
+        await userEvent.click(button);
+
+        // Wait for user data to be displayed
         await waitFor(() => {
-            expect(screen.getByText('Test Title 1')).toBeInTheDocument();
-            expect(screen.getByText('Test Body 2')).toBeInTheDocument();
+            expect(screen.getByText(/login_123/i)).toBeInTheDocument();
+            expect(screen.getByText(/company_ABC/i)).toBeInTheDocument();
         });
     });
 
@@ -59,6 +79,13 @@ describe('App Component', () => {
         } as unknown as Response);
 
         render(<App />);
+
+        // Simulate user entering a username and clicking search
+        const input = screen.getByPlaceholderText('Enter GitHub username');
+        const button = screen.getByRole('button', { name: /submit/i });
+
+        await userEvent.type(input, 'tester');
+        await userEvent.click(button);
 
         // Wait for error message to be displayed
         await waitFor(() => {
