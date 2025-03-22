@@ -1,4 +1,5 @@
 @hostAddress = https://localhost:7176
 
+
 GET {{hostAddress}}/GitHubUser/validate/chrisyoxall
 ###

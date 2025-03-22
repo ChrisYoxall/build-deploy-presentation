@@ -3,3 +3,6 @@
 **/node_modules
 react-spa/dist
 react-spa/tsconfig.tsbuildinfo
+
+**/bin
+**/obj

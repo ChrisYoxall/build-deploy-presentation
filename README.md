@@ -1,6 +1,8 @@
 # CI/CD Presentation #
 
-Add this file to the root of RevealJS files from https://revealjs.com/
+The presentation sides are created to be viewed using [RevealJS](https://revealjs.com)
+
+Download the latest version from [here]( https://github.com/hakimel/reveal.js/archive/master.zip)
 
 
 

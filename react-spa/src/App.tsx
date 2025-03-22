@@ -1,29 +1,40 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
-interface Post {
-    id: number;
-    title: string;
-    body: string;
+interface GitHubUserResponse {
+    isValid: boolean;
+    user: {
+        login: string;
+        id: number;
+        name: string;
+        company: string;
+        public_repos: number;
+    }
 }
 
 const App: React.FC = () => {
-    const [data, setData] = useState<Post[]>([]);
+    const [data, setData] = useState<GitHubUserResponse>();
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
-    const [inputValue, setInputValue] = useState<string>('posts');
+    const [inputValue, setInputValue] = useState<string>('');
 
     const fetchData = () => {
+
+        if (!inputValue.trim()) {
+            setError('Please enter a GitHub username');
+            return;
+        }
+
         setLoading(true);
         setError(null);
 
-        fetch(`https://jsonplaceholder.typicode.com/${inputValue}`)
+        fetch(`${import.meta.env.VITE_API_URL}/GitHubUser/validate/${inputValue}`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }
                 return response.json();
             })
-            .then((jsonData: Post[]) => {
+            .then((jsonData: GitHubUserResponse) => {
                 setData(jsonData);
                 setLoading(false);
             })
@@ -42,22 +53,17 @@ const App: React.FC = () => {
         setInputValue(e.target.value);
     };
 
-    // Initial fetch when component mounts
-    useEffect(() => {
-        fetchData();
-    }, []);
-
     return (
         <div className="p-4">
-            <h1 className="text-xl font-bold mb-4">Call user check endpoint with the below user:</h1>
+            <h1 className="text-xl font-bold mb-4">Validate GitHub user:</h1>
 
             <form onSubmit={handleSubmit} className="mb-4 flex gap-2">
                 <input
                     type="text"
                     value={inputValue}
                     onChange={handleInputChange}
-                    placeholder="Enter endpoint (e.g., posts, users, comments)"
                     className="border p-2 rounded flex-grow"
+                    placeholder="Enter GitHub username"
                 />
                 <button
                     type="submit"
@@ -70,14 +76,19 @@ const App: React.FC = () => {
             {loading && <div className="p-4">Loading...</div>}
             {error && <div className="p-4 text-red-500">{error}</div>}
 
-            {!loading && !error && (
+            {!loading && !error && data && (
                 <ul className="space-y-2">
-                    {data.slice(0, 10).map(item => (
-                        <li key={item.id} className="border p-3 rounded">
-                            <h2 className="font-semibold">{item.title}</h2>
-                            <p>{item.body}</p>
-                        </li>
-                    ))}
+                    {data.isValid ? (
+                        <>
+                            <li>Username: {data.user.login}</li>
+                            <li>ID: {data.user.id}</li>
+                            <li>Name: {data.user.name}</li>
+                            <li>Company: {data.user.company}</li>
+                            <li>Public repos: {data.user.public_repos}</li>
+                        </>
+                    ) : (
+                        <li>User does not exist</li>
+                    )}
                 </ul>
             )}
         </div>
