@@ -6,3 +6,4 @@ react-spa/tsconfig.tsbuildinfo
 
 **/bin
 **/obj
+**/*.DotSettings.user
