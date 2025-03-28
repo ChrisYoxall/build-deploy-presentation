@@ -1,14 +1,13 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeAll, afterEach, afterAll } from 'vitest';
+import { describe, it, expect, vi, afterEach, afterAll } from 'vitest';
 import userEvent from '@testing-library/user-event';
+import axios from 'axios';
 import App from './App';
 
+// Mock axios module
+vi.mock('axios');
+
 describe('App Component', () => {
-    // Setup mock before all tests
-    beforeAll(() => {
-        // Mock fetch globally
-        global.fetch = vi.fn();
-    });
 
     // Reset mocks after each test
     afterEach(() => {
@@ -21,8 +20,8 @@ describe('App Component', () => {
     });
 
     it('Shows loading state initially', async () => {
-        // Mock fetch to return a promise that never resolves for this test
-        vi.mocked(global.fetch).mockImplementation(() => new Promise(() => {}));
+        // Mock axios to return a promise that never resolves for this test
+        vi.mocked(axios.get).mockImplementation(() => new Promise(() => {}));
 
         render(<App />);
 
@@ -40,20 +39,19 @@ describe('App Component', () => {
     it('Renders user data when API call succeeds', async () => {
         // Mock successful API response
         const mockResponse = {
-            isValid: true,
-            user: {
-                login: 'login_123',
-                id: 123,
-                name: 'name',
-                company: 'company_ABC',
-                public_repos: 3
+            data: {
+                isValid: true,
+                user: {
+                    login: 'login_123',
+                    id: 123,
+                    name: 'name',
+                    company: 'company_ABC',
+                    public_repos: 3
+                }
             }
         };
 
-        vi.mocked(global.fetch).mockResolvedValueOnce({
-            ok: true,
-            json: async () => mockResponse
-        } as unknown as Response);
+        vi.mocked(axios.get).mockResolvedValueOnce(mockResponse);
 
         render(<App />);
 
@@ -73,10 +71,8 @@ describe('App Component', () => {
 
     it('Shows error when API call fails', async () => {
         // Mock failed API response
-        vi.mocked(global.fetch).mockResolvedValueOnce({
-            ok: false,
-            status: 404
-        } as unknown as Response);
+        const mockError = new Error('Network Error');
+        vi.mocked(axios.get).mockRejectedValueOnce(mockError);
 
         render(<App />);
 
@@ -89,7 +85,34 @@ describe('App Component', () => {
 
         // Wait for error message to be displayed
         await waitFor(() => {
-            expect(screen.getByText('Error fetching data: Network response was not ok')).toBeInTheDocument();
+            expect(screen.getByText('Error fetching data: Network Error')).toBeInTheDocument();
+        });
+    });
+
+    it('Shows error with server message when API returns error response', async () => {
+        // Mock server error response
+        const mockError = {
+            response: {
+                status: 404,
+                data: {
+                    message: 'User not found'
+                }
+            }
+        };
+        vi.mocked(axios.get).mockRejectedValueOnce(mockError);
+
+        render(<App />);
+
+        // Simulate user entering a username and clicking search
+        const input = screen.getByPlaceholderText('Enter GitHub username');
+        const button = screen.getByRole('button', { name: /submit/i });
+
+        await userEvent.type(input, 'tester');
+        await userEvent.click(button);
+
+        // Wait for error message to be displayed
+        await waitFor(() => {
+            expect(screen.getByText('Error fetching data: User not found')).toBeInTheDocument();
         });
     });
 });

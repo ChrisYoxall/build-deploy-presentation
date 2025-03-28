@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 
 interface GitHubUserResponse {
     isValid: boolean;
@@ -18,7 +19,6 @@ const App: React.FC = () => {
     const [inputValue, setInputValue] = useState<string>('');
 
     const fetchData = () => {
-
         if (!inputValue.trim()) {
             setError('Please enter a GitHub username');
             return;
@@ -27,22 +27,17 @@ const App: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        fetch(`${import.meta.env.VITE_API_URL}/GitHubUser/validate/${inputValue}`)
+        axios.get(`${import.meta.env.VITE_API_URL}/GitHubUser/validate/${inputValue}`)
             .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then((jsonData: GitHubUserResponse) => {
-                setData(jsonData);
+                setData(response.data);
                 setLoading(false);
             })
             .catch(error => {
-                setError('Error fetching data: ' + error.message);
+                setError('Error fetching data: ' + (error.response?.data?.message || error.message));
                 setLoading(false);
             });
     };
+
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
